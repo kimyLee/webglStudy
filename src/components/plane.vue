@@ -35,9 +35,39 @@ export default {
 
       let renderer = new THREE.WebGLRenderer({ antialias: true })
       this.renderer = renderer
+      renderer.shadowMap.enabled = true
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap
       // renderer.setPixelRatio(window.devicePixelRatio)
       renderer.setSize(window.innerWidth, window.innerHeight)
       document.body.appendChild(renderer.domElement)
+
+      // LIGHTS
+
+      var ambientLight, hemisphereLight, shadowLight
+      // 半圆灯光
+      hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.9)
+
+      // 所有的灯光
+      ambientLight = new THREE.AmbientLight(0xdc8874, 0.5)
+
+      shadowLight = new THREE.DirectionalLight(0xffffff, 1, 10)
+      shadowLight.position.set(0, -1, 1)
+      shadowLight.castShadow = true
+      // shadowLight.shadow.camera.left = -400
+      // shadowLight.shadow.camera.right = 400
+      shadowLight.shadow.camera.top = 4000
+      // shadowLight.shadow.camera.bottom = -400
+      // shadowLight.shadow.camera.near = 1
+      // shadowLight.shadow.camera.far = 1000
+      // shadowLight.shadow.mapSize.width = 4096
+      // shadowLight.shadow.mapSize.height = 4096
+
+      var ch = new THREE.CameraHelper(shadowLight.shadow.camera)
+
+      scene.add(ch)
+      scene.add(hemisphereLight)
+      scene.add(shadowLight)
+      scene.add(ambientLight)
 
       // 创建几何体
       // Cube
@@ -64,10 +94,20 @@ export default {
       // scene.add(cube)
 
       // Plane
-      let geometryPlane = new THREE.PlaneBufferGeometry(200, 200)
-      geometryPlane.rotateX(-Math.PI / 2)
-      let materialPlane = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 })
-      let plane = new THREE.Mesh(geometryPlane, materialPlane)
+      // let geometryPlane = new THREE.PlaneBufferGeometry(600, 600)
+      // geometryPlane.rotateX(-Math.PI / 2)
+      // let materialPlane = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 })
+      // let plane = new THREE.Mesh(geometryPlane, materialPlane)
+      // this.plane = plane
+      // plane.receiveShadow = true
+      // scene.add(plane)
+
+      var planeGeometry = new THREE.PlaneBufferGeometry(600, 600)
+      planeGeometry.rotateX(-Math.PI / 2)
+      var planeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff })
+      var plane = new THREE.Mesh(planeGeometry, planeMaterial)
+      plane.receiveShadow = true
+      plane.position.y = 0
       this.plane = plane
       scene.add(plane)
 
@@ -79,7 +119,7 @@ export default {
       // hero
       let airplane = new AirPlane()
       // airplane.mesh.scale.set(0.25, 0.25, 0.25)
-      airplane.mesh.position.y = 10
+      airplane.mesh.position.y = 100
       scene.add(airplane.mesh)
 
       // gui
@@ -90,6 +130,14 @@ export default {
       }, 'cameraHeight', -100, 500)
       cameraControl.onChange((val) => {
         this.camera.position.y = val
+      })
+
+      let cameraHorizontal = gui.add({
+        cameraHorizontal: 0
+      }, 'cameraHorizontal', -300, 300)
+      cameraHorizontal.onChange((val) => {
+        this.camera.position.x = val
+        this.camera.position.z = Math.round(Math.sqrt(500 * 500 - val * val))
       })
 
       let cameraFar = gui.add({
