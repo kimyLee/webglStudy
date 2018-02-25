@@ -20,6 +20,7 @@ export default {
       // obj
       stats: '',
       plane: '',
+      sea: '',
       cube: '',
       airplane: '',
       fires: []
@@ -67,89 +68,98 @@ export default {
       shadowLight.shadow.camera.right = -30
       shadowLight.shadow.camera.bottom = -300
 
-      // shadowLight.shadow.camera.left = -400
-      // shadowLight.shadow.camera.right = 400
-      // shadowLight.shadow.camera.top = 4000
-      // shadowLight.shadow.camera.bottom = -400
-      // shadowLight.shadow.camera.near = 1
-      // shadowLight.shadow.camera.far = 1000
-      // shadowLight.shadow.mapSize.width = 4096
-      // shadowLight.shadow.mapSize.height = 4096
-
       scene.add(hemisphereLight)
       scene.add(shadowLight)
       scene.add(ambientLight)
       var ch = new THREE.CameraHelper(shadowLight.shadow.camera)
       scene.add(ch)
-      // 创建几何体
-      // Cube
-      // let geometry = new THREE.BoxGeometry(200, 100, 200)
-      // // for (let i = 0; i < geometry.faces.length; i += 2) {
-      // //   let hex = Math.random() * 0xffffff
-      // //   geometry.faces[i].color.setHex(hex)
-      // //   geometry.faces[i + 1].color.setHex(hex)
-      // // }
-      // new THREE.ImageLoader()
-      //   .setCrossOrigin('*')
-      //   .load('/static/img/cat.jpg?' + performance.now(), (image) => {
-      //     var texture = new THREE.CanvasTexture(image)
-      //     var material = new THREE.MeshBasicMaterial({ color: 0xffffff, map: texture })
-      //     let cube = new THREE.Mesh(geometry, material)
-      //     cube.position.y = 150
-      //     this.cube = cube
-      //     scene.add(cube)
-      //   })
-      // let material = new THREE.MeshBasicMaterial({ vertexColors: THREE.FaceColors })
-      // let cube = new THREE.Mesh(geometry, material)
-      // cube.position.y = 150
-      // this.cube = cube
-      // scene.add(cube)
 
-      // Plane
-      // let geometryPlane = new THREE.PlaneBufferGeometry(600, 600)
-      // geometryPlane.rotateX(-Math.PI / 2)
-      // let materialPlane = new THREE.MeshBasicMaterial({ color: 0xe0e0e0 })
-      // let plane = new THREE.Mesh(geometryPlane, materialPlane)
-      // this.plane = plane
-      // plane.receiveShadow = true
-      // scene.add(plane)
-      // hero
       let airplane = new AirPlane()
       // airplane.mesh.scale.set(0.25, 0.25, 0.25)
       airplane.mesh.position.y = 100
       this.airplane = airplane
       this.scene.add(airplane.mesh)
 
-      // var sphereGeometry = new THREE.SphereBufferGeometry(10, 32, 32)
-      // var sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 })
-      // var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
-      // sphere.castShadow = true
-      // sphere.receiveShadow = false
-      // sphere.position.x = 0
-      // sphere.position.y = 20
-      // sphere.position.z = 0
-      // scene.add(sphere)
-
       // var planeGeometry = new THREE.PlaneBufferGeometry(600, 600, 1, 1)
       // planeGeometry.rotateX(-Math.PI / 2)
-      // var planeMaterial = new THREE.MeshStandardMaterial({color: 0x00ff00})
+      // var planeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff })
       // var plane = new THREE.Mesh(planeGeometry, planeMaterial)
-      // plane.position.z = -50
-      // plane.position.y = -30
-
       // plane.receiveShadow = true
+      // plane.position.y = -30
+      // plane.position.z = -50
       // this.plane = plane
       // scene.add(plane)
 
-      var planeGeometry = new THREE.PlaneBufferGeometry(600, 600, 1, 1)
-      planeGeometry.rotateX(-Math.PI / 2)
-      var planeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff })
-      var plane = new THREE.Mesh(planeGeometry, planeMaterial)
-      plane.receiveShadow = true
-      plane.position.y = -30
-      plane.position.z = -50
-      this.plane = plane
-      scene.add(plane)
+      // 海洋
+      /* eslint-disable */
+      let game = {
+        seaRadius:600,
+        seaLength:800,
+        wavesMinAmp : 5,
+        wavesMaxAmp : 20,
+        wavesMinSpeed : 0.001,
+        wavesMaxSpeed : 0.003,
+      }
+      var Colors = {
+          red:0xf25346,
+          white:0xd8d0d1,
+          brown:0x59332e,
+          brownDark:0x23190f,
+          pink:0xF5986E,
+          yellow:0xf4ce93,
+          blue:0x68c3c0,
+
+      };
+      let Sea = function () {
+        var geom = new THREE.CylinderGeometry(game.seaRadius,game.seaRadius,game.seaLength,40,10)
+        geom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI/2))
+        geom.mergeVertices()
+        var l = geom.vertices.length
+
+        this.waves = []
+
+        for (var i=0;i<l;i++){
+          var v = geom.vertices[i];
+          //v.y = Math.random()*30;
+          this.waves.push({y:v.y,
+                          x:v.x,
+                          z:v.z,
+                          ang:Math.random()*Math.PI*2,
+                          amp:game.wavesMinAmp + Math.random()*(game.wavesMaxAmp-game.wavesMinAmp),
+                          speed:game.wavesMinSpeed + Math.random()*(game.wavesMaxSpeed - game.wavesMinSpeed)
+                          });
+        };
+        var mat = new THREE.MeshPhongMaterial({
+          color:Colors.blue,
+          transparent:true,
+          opacity:.8,
+          shading:THREE.FlatShading,
+
+        });
+
+        this.mesh = new THREE.Mesh(geom, mat);
+        this.mesh.name = "waves";
+        this.mesh.receiveShadow = true;
+
+      }
+
+      Sea.prototype.moveWaves = function (){
+        var verts = this.mesh.geometry.vertices;
+        var l = verts.length;
+        for (var i=0; i<l; i++){
+          var v = verts[i];
+          var vprops = this.waves[i];
+          v.x =  vprops.x + Math.cos(vprops.ang)*vprops.amp;
+          v.y = vprops.y + Math.sin(vprops.ang)*vprops.amp;
+          vprops.ang += vprops.speed*deltaTime;
+          this.mesh.geometry.verticesNeedUpdate=true;
+        }
+      }
+      let sea = new Sea();
+      sea.mesh.position.y = -game.seaRadius;
+      scene.add(sea.mesh);
+      this.sea = sea
+      /* eslint-enable */
 
       let Stats = window.Stats
       let stats = new Stats()
@@ -194,8 +204,24 @@ export default {
       let scene = this.scene
       let camera = this.camera
       let cube = this.cube
-      let plane = this.plane
-      plane.rotation.y += 0.01
+
+      // 海面转动
+      let sea = this.sea
+      sea.mesh.rotation.z += game.speed * deltaTime     // *game.seaRotationSpeed;
+      if (sea.mesh.rotation.z > 2*Math.PI)  {
+        sea.mesh.rotation.z -= 2*Math.PI
+      }
+
+      ambientLight.intensity += (.5 - ambientLight.intensity)*deltaTime*0.005;
+
+      coinsHolder.rotateCoins();
+      ennemiesHolder.rotateEnnemies();
+
+      sky.moveClouds();
+      sea.moveWaves();
+
+      // let plane = this.plane
+      // plane.rotation.y += 0.01
       this.airplane.propeller.rotation.x += 0.2
       // 制造子弹
       // let fires = []
